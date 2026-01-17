@@ -1,6 +1,7 @@
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { Audio } from 'expo-av';
-import React, { useRef, useState } from 'react';
+import * as ScreenOrientation from 'expo-screen-orientation';
+import React, { useEffect, useRef, useState } from 'react';
 import { Alert, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 // Backend API URL
@@ -21,6 +22,15 @@ export default function App() {
   const [overlay, setOverlay] = useState<OverlayData | null>(null);
   const [isScanning, setIsScanning] = useState(false);
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
+  const [vrMode, setVrMode] = useState(false);
+
+  useEffect(() => {
+    if (vrMode) {
+      ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.LANDSCAPE_RIGHT);
+    } else {
+      ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP);
+    }
+  }, [vrMode]);
 
   const playPronunciation = async (text: string) => {
     if (isPlayingAudio) return;
@@ -88,13 +98,17 @@ export default function App() {
       const data = await response.json();
 
       if (!response.ok) {
-        // Show the error message from backend (e.g., "Point at a zongzi...")
         Alert.alert('Not Found', data.message || 'Item not recognized');
         setIsScanning(false);
         return;
       }
 
       setOverlay(data);
+
+      // Auto-play pronunciation in VR mode
+      if (vrMode) {
+        playPronunciation(data.translation);
+      }
 
       setIsScanning(false);
     } catch (error) {
@@ -119,6 +133,83 @@ export default function App() {
     );
   }
 
+  // VR Mode render - split screen for Google Cardboard
+  if (vrMode) {
+    return (
+      <View style={vrStyles.container}>
+        {/* Single camera as background */}
+        <CameraView
+          style={vrStyles.fullCamera}
+          facing="back"
+          ref={cameraRef}
+        />
+
+        {/* Split overlay container */}
+        <View style={vrStyles.splitOverlay}>
+          {/* Left eye overlay */}
+          <View style={vrStyles.eyeHalf}>
+            {overlay && (
+              <View style={vrStyles.eyeContent}>
+                <Text style={vrStyles.translation}>{overlay.translation}</Text>
+                <Text style={vrStyles.pinyin}>{overlay.pronunciation}</Text>
+                <Text style={vrStyles.english}>{overlay.english}</Text>
+              </View>
+            )}
+            {isScanning && (
+              <Text style={vrStyles.scanningText}>...</Text>
+            )}
+          </View>
+
+          {/* Center divider */}
+          <View style={vrStyles.centerDivider} />
+
+          {/* Right eye overlay */}
+          <View style={vrStyles.eyeHalf}>
+            {overlay && (
+              <View style={vrStyles.eyeContent}>
+                <Text style={vrStyles.translation}>{overlay.translation}</Text>
+                <Text style={vrStyles.pinyin}>{overlay.pronunciation}</Text>
+                <Text style={vrStyles.english}>{overlay.english}</Text>
+              </View>
+            )}
+            {isScanning && (
+              <Text style={vrStyles.scanningText}>...</Text>
+            )}
+          </View>
+        </View>
+
+        {/* Exit VR button (top left) */}
+        <TouchableOpacity
+          style={vrStyles.exitButton}
+          onPress={() => {
+            setVrMode(false);
+            setOverlay(null);
+          }}
+        >
+          <Text style={vrStyles.exitButtonText}>X</Text>
+        </TouchableOpacity>
+
+        {/* Scan button (bottom center) */}
+        <TouchableOpacity
+          style={vrStyles.scanButton}
+          onPress={captureAndAnalyze}
+          disabled={isScanning}
+        >
+          <View style={[vrStyles.scanButtonInner, isScanning && { opacity: 0.5 }]} />
+        </TouchableOpacity>
+
+        {/* Dismiss overlay (tap anywhere when overlay shown) */}
+        {overlay && (
+          <TouchableOpacity
+            style={vrStyles.dismissArea}
+            onPress={() => setOverlay(null)}
+          />
+        )}
+      </View>
+    );
+  }
+
+  // Normal mode render
   return (
     <View style={styles.container}>
       <CameraView
@@ -126,9 +217,17 @@ export default function App() {
         facing="back"
         ref={cameraRef}
       >
+        {/* VR Mode Toggle */}
+        <TouchableOpacity
+          style={styles.vrButton}
+          onPress={() => setVrMode(true)}
+        >
+          <Text style={styles.vrButtonText}>VR</Text>
+        </TouchableOpacity>
+
         {/* Scan Button */}
         <View style={styles.buttonContainer}>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={[styles.scanButton, isScanning && styles.scanButtonDisabled]}
             onPress={captureAndAnalyze}
             disabled={isScanning}
@@ -142,7 +241,7 @@ export default function App() {
         {/* Overlay */}
         {overlay && (
           <View style={styles.overlay}>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.closeButton}
               onPress={() => setOverlay(null)}
             >
@@ -157,7 +256,7 @@ export default function App() {
             <Text style={styles.englishWord}>{overlay.english}</Text>
             <Text style={styles.word}>{overlay.translation}</Text>
             <Text style={styles.pinyin}>{overlay.pronunciation}</Text>
-            
+
             <TouchableOpacity
               style={[styles.audioButton, isPlayingAudio && styles.audioButtonDisabled]}
               onPress={() => playPronunciation(overlay.translation)}
@@ -173,7 +272,7 @@ export default function App() {
               <Text style={styles.culturalText}>{overlay.culturalContext}</Text>
             </View>
 
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.gotItButton}
               onPress={() => setOverlay(null)}
             >
@@ -193,6 +292,20 @@ const styles = StyleSheet.create({
   },
   camera: {
     flex: 1,
+  },
+  vrButton: {
+    position: 'absolute',
+    top: 50,
+    right: 20,
+    backgroundColor: 'rgba(0, 255, 0, 0.8)',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 20,
+  },
+  vrButtonText: {
+    color: 'black',
+    fontWeight: 'bold',
+    fontSize: 16,
   },
   buttonContainer: {
     position: 'absolute',
@@ -318,5 +431,118 @@ const styles = StyleSheet.create({
     color: 'black',
     fontWeight: 'bold',
     fontSize: 16,
+  },
+});
+
+// VR Mode styles
+const vrStyles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#000',
+  },
+  fullCamera: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+  },
+  splitOverlay: {
+    flex: 1,
+    flexDirection: 'row',
+  },
+  eyeHalf: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(0, 255, 0, 0.3)',
+  },
+  eyeContent: {
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    padding: 15,
+    borderRadius: 12,
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#00ff00',
+  },
+  centerDivider: {
+    width: 4,
+    backgroundColor: '#000',
+  },
+  translation: {
+    fontSize: 32,
+    color: '#00ff00',
+    fontWeight: 'bold',
+    textShadowColor: 'rgba(0, 0, 0, 0.8)',
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 10,
+  },
+  pinyin: {
+    fontSize: 16,
+    color: '#fff',
+    marginTop: 6,
+    textShadowColor: 'rgba(0, 0, 0, 0.8)',
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 5,
+  },
+  english: {
+    fontSize: 12,
+    color: '#ccc',
+    marginTop: 4,
+    textShadowColor: 'rgba(0, 0, 0, 0.8)',
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 5,
+  },
+  exitButton: {
+    position: 'absolute',
+    top: 20,
+    left: 20,
+    backgroundColor: 'rgba(255, 0, 0, 0.8)',
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  exitButtonText: {
+    color: 'white',
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
+  scanButton: {
+    position: 'absolute',
+    bottom: 20,
+    left: '50%',
+    marginLeft: -25,
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 3,
+    borderColor: '#00ff00',
+  },
+  scanButtonInner: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: '#00ff00',
+  },
+  scanningText: {
+    color: '#00ff00',
+    fontSize: 20,
+    fontWeight: 'bold',
+    textShadowColor: 'rgba(0, 0, 0, 0.8)',
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 10,
+  },
+  dismissArea: {
+    position: 'absolute',
+    top: 60,
+    left: 0,
+    right: 0,
+    bottom: 80,
   },
 });
