@@ -1,11 +1,18 @@
 import { CameraView, useCameraPermissions } from 'expo-camera';
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Alert, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { VolumeManager } from 'react-native-volume-manager';
+
+// Backend API URL
+const API_URL = 'https://identitybackend-production-ebf0.up.railway.app';
 
 interface OverlayData {
+  english: string;
   translation: string;
   pronunciation: string;
   culturalContext: string;
+  isReview?: boolean;
+  timesSeenCount?: number;
 }
 
 export default function App() {
@@ -13,6 +20,34 @@ export default function App() {
   const cameraRef = useRef<CameraView>(null);
   const [overlay, setOverlay] = useState<OverlayData | null>(null);
   const [isScanning, setIsScanning] = useState(false);
+  const lastVolumeRef = useRef<number | null>(null);
+
+  // Listen for volume button presses
+  useEffect(() => {
+    const volumeListener = VolumeManager.addVolumeListener((result) => {
+      const currentVolume = result.volume;
+
+      if (lastVolumeRef.current !== null) {
+        if (currentVolume > lastVolumeRef.current) {
+          // Volume UP pressed → trigger scan
+          captureAndAnalyze();
+        } else if (currentVolume < lastVolumeRef.current) {
+          // Volume DOWN pressed → close overlay
+          setOverlay(null);
+        }
+      }
+
+      lastVolumeRef.current = currentVolume;
+    });
+
+    // Suppress native volume UI for cleaner experience
+    VolumeManager.showNativeVolumeUI({ enabled: false });
+
+    return () => {
+      volumeListener.remove();
+      VolumeManager.showNativeVolumeUI({ enabled: true });
+    };
+  }, []);
 
   const captureAndAnalyze = async () => {
     if (!cameraRef.current || isScanning) return;
@@ -22,22 +57,36 @@ export default function App() {
     try {
       const photo = await cameraRef.current.takePictureAsync({
         base64: true,
-        quality: 0.5
+        quality: 0.7,
       });
-      
-      // TODO: Call your backend API here
-      // For now, show fake data
-      setTimeout(() => {
-        setOverlay({
-          translation: '饺子',
-          pronunciation: 'jiǎozi',
-          culturalContext: 'Made during Chinese New Year, each fold is a wish for prosperity. Shaped like ancient gold ingots to invite wealth. Your grandma probably folded these with her own grandmother.'
-        });
-        setIsScanning(false);
-      }, 1500);
-      
+
+      if (!photo?.base64) {
+        throw new Error('No image data');
+      }
+
+      // Send to backend API
+      const response = await fetch(`${API_URL}/api/scan`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          image: photo.base64,
+          userId: 'default',
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('API request failed');
+      }
+
+      const data: OverlayData = await response.json();
+      setOverlay(data);
+
+      setIsScanning(false);
     } catch (error) {
-      Alert.alert('Error', 'Failed to capture photo');
+      console.error('Capture error:', error);
+      Alert.alert('Error', 'Failed to analyze image');
       setIsScanning(false);
     }
   };
@@ -87,6 +136,12 @@ export default function App() {
               <Text style={styles.closeText}>✕</Text>
             </TouchableOpacity>
 
+            {overlay.isReview && (
+              <Text style={styles.reviewBadge}>
+                Seen {overlay.timesSeenCount}x
+              </Text>
+            )}
+            <Text style={styles.englishWord}>{overlay.english}</Text>
             <Text style={styles.word}>{overlay.translation}</Text>
             <Text style={styles.pinyin}>{overlay.pronunciation}</Text>
             
@@ -177,6 +232,18 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 24,
     fontWeight: 'bold',
+  },
+  reviewBadge: {
+    color: '#00ff00',
+    fontSize: 12,
+    fontWeight: 'bold',
+    marginBottom: 8,
+    textTransform: 'uppercase',
+  },
+  englishWord: {
+    fontSize: 16,
+    color: '#888',
+    marginBottom: 4,
   },
   word: {
     fontSize: 48,
