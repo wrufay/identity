@@ -1,7 +1,6 @@
 import { CameraView, useCameraPermissions } from 'expo-camera';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { Alert, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { VolumeManager } from 'react-native-volume-manager';
 
 // Backend API URL
 const API_URL = 'https://identitybackend-production-ebf0.up.railway.app';
@@ -20,34 +19,6 @@ export default function App() {
   const cameraRef = useRef<CameraView>(null);
   const [overlay, setOverlay] = useState<OverlayData | null>(null);
   const [isScanning, setIsScanning] = useState(false);
-  const lastVolumeRef = useRef<number | null>(null);
-
-  // Listen for volume button presses
-  useEffect(() => {
-    const volumeListener = VolumeManager.addVolumeListener((result) => {
-      const currentVolume = result.volume;
-
-      if (lastVolumeRef.current !== null) {
-        if (currentVolume > lastVolumeRef.current) {
-          // Volume UP pressed → trigger scan
-          captureAndAnalyze();
-        } else if (currentVolume < lastVolumeRef.current) {
-          // Volume DOWN pressed → close overlay
-          setOverlay(null);
-        }
-      }
-
-      lastVolumeRef.current = currentVolume;
-    });
-
-    // Suppress native volume UI for cleaner experience
-    VolumeManager.showNativeVolumeUI({ enabled: false });
-
-    return () => {
-      volumeListener.remove();
-      VolumeManager.showNativeVolumeUI({ enabled: true });
-    };
-  }, []);
 
   const captureAndAnalyze = async () => {
     if (!cameraRef.current || isScanning) return;
