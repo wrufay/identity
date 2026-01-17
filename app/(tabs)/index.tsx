@@ -1,4 +1,5 @@
 import { CameraView, useCameraPermissions } from 'expo-camera';
+import { Audio } from 'expo-av';
 import React, { useRef, useState } from 'react';
 import { Alert, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
@@ -19,6 +20,43 @@ export default function App() {
   const cameraRef = useRef<CameraView>(null);
   const [overlay, setOverlay] = useState<OverlayData | null>(null);
   const [isScanning, setIsScanning] = useState(false);
+  const [isPlayingAudio, setIsPlayingAudio] = useState(false);
+
+  const playPronunciation = async (text: string) => {
+    if (isPlayingAudio) return;
+
+    setIsPlayingAudio(true);
+    try {
+      const response = await fetch(`${API_URL}/api/tts`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.audio) {
+        throw new Error('Failed to get audio');
+      }
+
+      const { sound } = await Audio.Sound.createAsync(
+        { uri: `data:audio/mpeg;base64,${data.audio}` }
+      );
+
+      await sound.playAsync();
+
+      sound.setOnPlaybackStatusUpdate((status) => {
+        if (status.isLoaded && status.didJustFinish) {
+          sound.unloadAsync();
+          setIsPlayingAudio(false);
+        }
+      });
+    } catch (error) {
+      console.error('Audio error:', error);
+      Alert.alert('Error', 'Failed to play pronunciation');
+      setIsPlayingAudio(false);
+    }
+  };
 
   const captureAndAnalyze = async () => {
     if (!cameraRef.current || isScanning) return;
@@ -47,11 +85,15 @@ export default function App() {
         }),
       });
 
+      const data = await response.json();
+
       if (!response.ok) {
-        throw new Error('API request failed');
+        // Show the error message from backend (e.g., "Point at a zongzi...")
+        Alert.alert('Not Found', data.message || 'Item not recognized');
+        setIsScanning(false);
+        return;
       }
 
-      const data: OverlayData = await response.json();
       setOverlay(data);
 
       setIsScanning(false);
@@ -116,8 +158,14 @@ export default function App() {
             <Text style={styles.word}>{overlay.translation}</Text>
             <Text style={styles.pinyin}>{overlay.pronunciation}</Text>
             
-            <TouchableOpacity style={styles.audioButton}>
-              <Text style={styles.audioText}>🔊 Hear pronunciation</Text>
+            <TouchableOpacity
+              style={[styles.audioButton, isPlayingAudio && styles.audioButtonDisabled]}
+              onPress={() => playPronunciation(overlay.translation)}
+              disabled={isPlayingAudio}
+            >
+              <Text style={styles.audioText}>
+                {isPlayingAudio ? '🔊 Playing...' : '🔊 Hear pronunciation'}
+              </Text>
             </TouchableOpacity>
 
             <View style={styles.culturalBox}>
@@ -238,6 +286,9 @@ const styles = StyleSheet.create({
     color: 'black',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  audioButtonDisabled: {
+    opacity: 0.5,
   },
   culturalBox: {
     marginTop: 10,
