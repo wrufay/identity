@@ -6,9 +6,11 @@ import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useFonts } from 'expo-font';
 import * as ScreenOrientation from 'expo-screen-orientation';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import GlOverlay from '../../components/GlOverlay';
 import TranslationOverlay from '../../components/TranslationOverlay';
+import WelcomeOverlay from '../../components/WelcomeOverlay';
+import { Colors } from '../../constants/theme';
 
 // Backend API URL
 const API_URL = 'https://identitybackend-production-ebf0.up.railway.app';
@@ -42,6 +44,7 @@ export default function App() {
   const [overlay, setOverlay] = useState<OverlayData | null>(null);
   const [isScanning, setIsScanning] = useState(false);
   const [vrMode, setVrMode] = useState(false);
+  const [hasSeenWelcome, setHasSeenWelcome] = useState(false);
 
   // Compute 3D models based on detected content
   const models = useMemo(() => {
@@ -196,90 +199,41 @@ export default function App() {
 
         {/* Split overlay container */}
         <View style={vrStyles.splitOverlay}>
-          {/* Left eye overlay */}
-          <View style={vrStyles.eyeHalf}>
-            {overlay ? (
-              <TranslationOverlay
-                translation={overlay.translation}
-                pronunciation={overlay.pronunciation}
-                english={overlay.english}
-                culturalContext={overlay.culturalContext}
-              />
-            ) : isScanning ? (
-              <TranslationOverlay
-                translation=""
-                pronunciation=""
-                english=""
-                isScanning={true}
-              />
-            ) : null}
-          </View>
+          {/* Left eye */}
+          <View style={vrStyles.eyeHalf} />
 
           {/* Center divider */}
           <View style={vrStyles.centerDivider} />
 
-          {/* Right eye overlay */}
-          <View style={vrStyles.eyeHalf}>
-            {overlay ? (
-              <TranslationOverlay
-                translation={overlay.translation}
-                pronunciation={overlay.pronunciation}
-                english={overlay.english}
-                culturalContext={overlay.culturalContext}
-              />
-            ) : isScanning ? (
-              <TranslationOverlay
-                translation=""
-                pronunciation=""
-                english=""
-                isScanning={true}
-              />
-            ) : null}
-          </View>
+          {/* Right eye */}
+          <View style={vrStyles.eyeHalf} />
         </View>
 
-        {/* Tap anywhere to scan or dismiss overlay */}
-        {!overlay && !isScanning && (
-          <TouchableOpacity
-            style={vrStyles.tapToScanArea}
-            onPress={captureAndAnalyze}
-            activeOpacity={1}
-          >
-            <View style={{ flex: 1 }} pointerEvents="box-none">
-              {/* Exit VR button (top left) */}
-              <TouchableOpacity
-                style={vrStyles.exitButton}
-                onPress={() => {
-                  setVrMode(false);
-                  setOverlay(null);
-                }}
-              >
-                <Text style={vrStyles.exitButtonText}>Regular mode</Text>
-              </TouchableOpacity>
-            </View>
-          </TouchableOpacity>
-        )}
+        {/* Tap anywhere to scan */}
+        <TouchableOpacity
+          style={vrStyles.tapToScanArea}
+          onPress={captureAndAnalyze}
+          activeOpacity={1}
+        >
+          <View style={{ flex: 1 }} pointerEvents="box-none">
+            {/* Exit VR button - bottom right */}
+            <TouchableOpacity
+              style={vrStyles.modeButton}
+              onPress={() => {
+                setVrMode(false);
+                setOverlay(null);
+              }}
+              activeOpacity={0.8}
+            >
+              <Image
+                source={require('../../assets/images/regular.png')}
+                style={vrStyles.modeButtonImage}
+                resizeMode="contain"
+              />
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
 
-        {overlay && (
-          <TouchableOpacity
-            style={vrStyles.tapToScanArea}
-            onPress={() => setOverlay(null)}
-            activeOpacity={1}
-          >
-            <View style={{ flex: 1 }} pointerEvents="box-none">
-              {/* Exit VR button (top left) */}
-              <TouchableOpacity
-                style={vrStyles.exitButton}
-                onPress={() => {
-                  setVrMode(false);
-                  setOverlay(null);
-                }}
-              >
-                <Text style={vrStyles.exitButtonText}>Regular mode</Text>
-              </TouchableOpacity>
-            </View>
-          </TouchableOpacity>
-        )}
       </View>
     );
   }
@@ -292,12 +246,20 @@ export default function App() {
         facing="back"
         ref={cameraRef}
       >
-        {/* VR Mode Toggle - always visible */}
+        {/* VR Mode Toggle - bottom right */}
         <TouchableOpacity
-          style={styles.vrButton}
-          onPress={() => setVrMode(true)}
+          style={styles.modeButton}
+          onPress={() => {
+            setOverlay(null);
+            setVrMode(true);
+          }}
+          activeOpacity={0.8}
         >
-          <Text style={styles.vrButtonText}>VR Mode</Text>
+          <Image
+            source={require('../../assets/images/vr.png')}
+            style={styles.modeButtonImage}
+            resizeMode="contain"
+          />
         </TouchableOpacity>
 
         {/* Tap anywhere to scan (only when no overlay is shown) */}
@@ -322,6 +284,7 @@ export default function App() {
                 pronunciation={overlay.pronunciation}
                 english={overlay.english}
                 culturalContext={overlay.culturalContext}
+                onDismiss={() => setOverlay(null)}
               />
             ) : (
               <TranslationOverlay
@@ -335,6 +298,10 @@ export default function App() {
         )}
       </CameraView>
       <GlOverlay models={models} />
+      <WelcomeOverlay
+        hasSeenWelcome={hasSeenWelcome}
+        onWelcomeDismissed={() => setHasSeenWelcome(true)}
+      />
     </View>
   );
 }
@@ -342,34 +309,30 @@ export default function App() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000',
+    backgroundColor: Colors.olive,
   },
   camera: {
     flex: 1,
   },
-  vrButton: {
+  modeButton: {
     position: 'absolute',
-    top: 50,
+    bottom: 40,
     right: 20,
-    backgroundColor: 'rgba(254, 250, 220, 0.3)',
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 20,
+    zIndex: 50,
   },
-  vrButtonText: {
-    color: '#333',
-    fontFamily: 'ZCOOLKuaiLe_400Regular',
-    fontSize: 18,
+  modeButtonImage: {
+    width: 50,
+    height: 50,
   },
 
   grantButton: {
-    backgroundColor: 'rgba(254, 250, 220, 0.3)',
+    backgroundColor: 'rgba(255, 255, 255, 0.6)',
     paddingHorizontal: 30,
     paddingVertical: 15,
     borderRadius: 20,
   },
   grantButtonText: {
-    color: '#FCD34D',
+    color: Colors.red,
     fontFamily: 'ZCOOLKuaiLe_400Regular',
     fontSize: 18,
   },
@@ -418,21 +381,15 @@ const vrStyles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.4)',
   },
 
-  exitButton: {
+  modeButton: {
     position: 'absolute',
-    top: 20,
-    left: 20,
-    backgroundColor: 'rgba(254, 250, 220, 0.3)',
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
+    bottom: 20,
+    right: 20,
+    zIndex: 50,
   },
-  exitButtonText: {
-    color: '#333',
-    fontFamily: 'ZCOOLKuaiLe_400Regular',
-    fontSize: 18,
+  modeButtonImage: {
+    width: 50,
+    height: 50,
   },
 
   tapToScanArea: {

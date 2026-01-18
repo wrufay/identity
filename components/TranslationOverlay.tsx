@@ -1,6 +1,6 @@
 import { Audio } from 'expo-av';
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, Text, TouchableOpacity, View, ActivityIndicator, ScrollView } from 'react-native';
+import { ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 interface TranslationOverlayProps {
   translation: string;
@@ -8,6 +8,7 @@ interface TranslationOverlayProps {
   english: string;
   culturalContext?: string;
   isScanning?: boolean;
+  onDismiss?: () => void;
 }
 
 const API_URL = 'https://identitybackend-production-ebf0.up.railway.app';
@@ -18,7 +19,10 @@ export default function TranslationOverlay({
   english,
   culturalContext,
   isScanning = false,
+  onDismiss,
 }: TranslationOverlayProps) {
+  // Check if this is an error/nothing detected message
+  const isErrorMessage = !translation && (english.includes('Nothing detected') || english.includes('Try again'));
 
   const [dots, setDots] = useState('.');
   const [definition, setDefinition] = useState<string | null>(null);
@@ -119,6 +123,11 @@ export default function TranslationOverlay({
   }
 
   const handleScreenTap = () => {
+    // If it's an error message, just dismiss immediately
+    if (isErrorMessage) {
+      onDismiss?.();
+      return;
+    }
     // Cycle through: 0 (translation) -> 1 (cultural context) -> 2 (hidden) -> back to parent
     setViewState((prev) => (prev + 1) % 3);
   };
@@ -143,15 +152,19 @@ export default function TranslationOverlay({
           <>
             <Text style={styles.translation}>{translation}</Text>
             <Text style={styles.pinyin}>{pronunciation}</Text>
-            <TouchableOpacity
-              onPress={(e) => {
-                e.stopPropagation();
-                fetchDefinition();
-              }}
-              activeOpacity={0.7}
-            >
+            {isErrorMessage ? (
               <Text style={styles.english}>{english}</Text>
-            </TouchableOpacity>
+            ) : (
+              <TouchableOpacity
+                onPress={(e) => {
+                  e.stopPropagation();
+                  fetchDefinition();
+                }}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.english}>{english}</Text>
+              </TouchableOpacity>
+            )}
             {loadingDefinition && (
               <View style={styles.definitionBubble}>
                 <ActivityIndicator color="#7c6a0a" />
@@ -265,7 +278,7 @@ const styles = StyleSheet.create({
     width: '90%',
   },
   familiarityButton: {
-    backgroundColor: 'rgba(255, 209, 102, 0.3)',
+    backgroundColor: 'rgba(255, 209, 102, 0.8)',
     borderRadius: 20,
     paddingHorizontal: 16,
     paddingVertical: 8,
