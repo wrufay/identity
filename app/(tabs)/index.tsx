@@ -5,8 +5,9 @@ import { Audio } from 'expo-av';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useFonts } from 'expo-font';
 import * as ScreenOrientation from 'expo-screen-orientation';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import GlOverlay from '../../components/GlOverlay';
 import TranslationOverlay from '../../components/TranslationOverlay';
 
 // Backend API URL
@@ -41,6 +42,56 @@ export default function App() {
   const [overlay, setOverlay] = useState<OverlayData | null>(null);
   const [isScanning, setIsScanning] = useState(false);
   const [vrMode, setVrMode] = useState(false);
+
+  // Compute 3D models based on detected content
+  const models = useMemo(() => {
+    if (!overlay) {
+      return [];
+    }
+
+    const word = (overlay.english || overlay.translation || '').toLowerCase();
+
+    // Dragon Boat / Zongzi
+    if (word.includes('zong') || word.includes('粽') || word.includes('dragon boat') || word.includes('龙舟')) {
+      return [
+        {
+          id: 'dragonboat',
+          src: require('../../objects/dragon-boats.glb'),
+          textures: [require('../../objects/dragon-boat.jpg')],
+          position: { x: 0, y: -0.5, z: -2.5 },
+          scale: 1.0
+        },
+      ];
+    }
+
+    // Lantern / Lion Dancer
+    if (word.includes('lantern') || word.includes('灯笼') || word.includes('红灯笼') || word.includes('lion') || word.includes('red')) {
+      return [
+        {
+          id: 'lion',
+          src: require('../../objects/lion-dancer.glb'),
+          textures: [require('../../objects/lion-dancer.jpg')],
+          position: { x: 0, y: -0.5, z: -2.5 },
+          scale: 1.2
+        },
+      ];
+    }
+
+    // Mooncake / Mid-Autumn
+    if (word.includes('mooncake') || word.includes('月饼') || word.includes('mid') || word.includes('autumn')) {
+      return [
+        {
+          id: 'midgirl',
+          src: require('../../objects/midautumn-girl.glb'),
+          textures: [require('../../objects/midautumn-girl.jpg')],
+          position: { x: 0, y: -0.5, z: -2.5 },
+          scale: 1.2
+        },
+      ];
+    }
+
+    return [];
+  }, [overlay]);
 
   useEffect(() => {
     if (vrMode) {
@@ -283,6 +334,7 @@ export default function App() {
           </TouchableOpacity>
         )}
       </CameraView>
+      <GlOverlay models={models} />
     </View>
   );
 }
