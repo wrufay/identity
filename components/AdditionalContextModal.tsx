@@ -1,15 +1,15 @@
-import React, { useEffect, useState } from 'react';
-import { 
-  ActivityIndicator, 
-  Modal, 
-  StyleSheet, 
-  Text, 
-  TouchableOpacity, 
-  View,
-  ScrollView 
-} from 'react-native';
-import { generateAdditionalContext, AdditionalContextResponse } from '@/services/backboardService';
+import { AdditionalContextResponse, generateAdditionalContext } from '@/services/backboardService';
 import { Audio } from 'expo-av';
+import React, { useEffect, useState } from 'react';
+import {
+    ActivityIndicator,
+    Modal,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View
+} from 'react-native';
 
 interface AdditionalContextModalProps {
   visible: boolean;

@@ -1,7 +1,7 @@
 // Backboard.io API integration for Gemini 1.5 Flash vision processing
 // Enhanced with user preference-based personalization
 
-import { UserPrefs, ProficiencyLevel, LearningGoal } from './userPreferences';
+import { LearningGoal, ProficiencyLevel, UserPrefs } from './userPreferences';
 
 const BACKBOARD_API_URL = 'https://api.backboard.io/v1/completions';
 const BACKBOARD_API_KEY = process.env.BACKBOARD_API_KEY || 'your-api-key-here';

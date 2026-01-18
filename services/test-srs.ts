@@ -1,8 +1,8 @@
 // Test script for SRS and Analytics
 // Run this to generate sample data and test the services
 
-import { SRS, ReviewQuality } from './srs';
 import { Analytics, AnalyticsEvents } from './analytics';
+import { ReviewQuality, SRS } from './srs';
 
 const sampleWords = [
   {
