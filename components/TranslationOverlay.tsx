@@ -165,9 +165,22 @@ export default function TranslationOverlay({
           </>
         )}
         {viewState === 1 && culturalContext && culturalContext.length > 0 && (
-          <View style={styles.culturalBubble}>
-            <Text style={styles.culturalContext}>{culturalContext}</Text>
-          </View>
+          <>
+            <View style={styles.culturalBubble}>
+              <Text style={styles.culturalContext}>{culturalContext}</Text>
+            </View>
+            <View style={styles.familiarityButtons}>
+              <TouchableOpacity style={styles.familiarityButton}>
+                <Text style={styles.familiarityButtonText}>Unfamiliar</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.familiarityButton}>
+                <Text style={styles.familiarityButtonText}>Neutral</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.familiarityButton}>
+                <Text style={styles.familiarityButtonText}>Familiar</Text>
+              </TouchableOpacity>
+            </View>
+          </>
         )}
       </ScrollView>
     </TouchableOpacity>
@@ -243,6 +256,26 @@ const styles = StyleSheet.create({
     fontFamily: 'Lexend_300Light',
     lineHeight: 22,
     textAlign: 'center',
+  },
+  familiarityButtons: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 10,
+    marginTop: 16,
+    width: '90%',
+  },
+  familiarityButton: {
+    backgroundColor: 'rgba(255, 209, 102, 0.3)',
+    borderRadius: 20,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderWidth: 1,
+    borderColor: '#ffd166',
+  },
+  familiarityButtonText: {
+    fontSize: 12,
+    color: '#7c6a0a',
+    fontFamily: 'Lexend_400Regular',
   },
   scanningText: {
     color: '#fefadc',
