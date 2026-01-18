@@ -5,8 +5,9 @@ import { Audio } from 'expo-av';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useFonts } from 'expo-font';
 import * as ScreenOrientation from 'expo-screen-orientation';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Alert, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import GlOverlay from '../../components/GlOverlay';
 import TranslationOverlay from '../../components/TranslationOverlay';
 
 // Backend API URL
@@ -41,6 +42,62 @@ export default function App() {
   const [overlay, setOverlay] = useState<OverlayData | null>(null);
   const [isScanning, setIsScanning] = useState(false);
   const [vrMode, setVrMode] = useState(false);
+
+  // Compute 3D models based on detected content
+  const models = useMemo(() => {
+    if (!overlay) {
+      console.log('No overlay data, no models to show');
+      return [];
+    }
+    
+    const word = (overlay.english || overlay.translation || '').toLowerCase();
+    console.log('Checking word for 3D models:', word);
+
+    // Dragon Boat / Zongzi
+    if (word.includes('zong') || word.includes('粽') || word.includes('dragon boat') || word.includes('龙舟')) {
+      console.log('🎯 Testing with DRAGON BOAT model + texture');
+      return [
+        { 
+          id: 'dragonboat', 
+          src: require('../../objects/dragon-boats.glb'),
+          textures: [require('../../objects/dragon-boat.jpg')],
+          position: { x: 0, y: -0.5, z: -2.5 }, 
+          scale: 1.0
+        },
+      ];
+    }
+
+    // Lantern / Lion Dancer (also detects "red")
+    if (word.includes('lantern') || word.includes('灯笼') || word.includes('红灯笼') || word.includes('lion') || word.includes('red')) {
+      console.log('🎯 Showing Lion Dancer model');
+      return [
+        { 
+          id: 'lion', 
+          src: require('../../objects/lion-dancer.glb'),
+          textures: [require('../../objects/lion-dancer.jpg')],
+          position: { x: 0, y: -0.5, z: -2.5 }, 
+          scale: 1.2 
+        },
+      ];
+    }
+
+    // Mooncake / Mid-Autumn
+    if (word.includes('mooncake') || word.includes('月饼') || word.includes('mid') || word.includes('autumn')) {
+      console.log('🎯 Showing Mid-Autumn Girl model');
+      return [
+        { 
+          id: 'midgirl', 
+          src: require('../../objects/midautumn-girl.glb'),
+          textures: [require('../../objects/midautumn-girl.jpg')],
+          position: { x: 0, y: -0.5, z: -2.5 }, 
+          scale: 1.2 
+        },
+      ];
+    }
+
+    console.log('No matching models for:', word);
+    return [];
+  }, [overlay]);
 
   useEffect(() => {
     if (vrMode) {
@@ -237,6 +294,22 @@ export default function App() {
           <Text style={styles.vrButtonText}>VR Mode</Text>
         </TouchableOpacity>
 
+        {/* Test 3D Button - bottom left */}
+        <TouchableOpacity
+          style={styles.test3DButton}
+          onPress={() => {
+            console.log('Test 3D button pressed!');
+            setOverlay({
+              english: 'Dragon Boat',
+              translation: '龙舟',
+              pronunciation: 'lóng zhōu',
+              culturalContext: 'The dragon boat is a traditional watercraft used in Chinese racing festivals.',
+            });
+          }}
+        >
+          <Text style={styles.test3DButtonText}>Test 3D</Text>
+        </TouchableOpacity>
+
         {/* Tap anywhere to scan (only when no overlay is shown) */}
         {!overlay && !isScanning && (
           <TouchableOpacity
@@ -248,11 +321,7 @@ export default function App() {
 
         {/* Overlay */}
         {(overlay || isScanning) && (
-          <TouchableOpacity
-            style={styles.overlayContainer}
-            onPress={() => setOverlay(null)}
-            activeOpacity={1}
-          >
+          <View style={styles.overlayContainer} pointerEvents="box-none">
             {overlay ? (
               <TranslationOverlay
                 translation={overlay.translation}
@@ -268,9 +337,24 @@ export default function App() {
                 isScanning={true}
               />
             )}
-          </TouchableOpacity>
+          </View>
         )}
       </CameraView>
+
+      {/* 3D Model Overlay - renders above camera when models are detected */}
+      {models.length > 0 && (
+        <GlOverlay models={models} />
+      )}
+
+      {/* Close button - rendered above everything */}
+      {overlay && (
+        <TouchableOpacity
+          style={styles.closeButton}
+          onPress={() => setOverlay(null)}
+        >
+          <Text style={styles.closeButtonText}>✕ Close</Text>
+        </TouchableOpacity>
+      )}
     </View>
   );
 }
@@ -296,6 +380,20 @@ const styles = StyleSheet.create({
     color: '#333',
     fontFamily: 'NanumPenScript_400Regular',
     fontSize: 18,
+  },
+  test3DButton: {
+    position: 'absolute',
+    bottom: 50,
+    left: 20,
+    backgroundColor: 'rgba(0, 255, 0, 0.7)',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 20,
+  },
+  test3DButtonText: {
+    color: '#000',
+    fontWeight: 'bold',
+    fontSize: 16,
   },
 
   grantButton: {
@@ -324,6 +422,21 @@ const styles = StyleSheet.create({
     bottom: 0,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  closeButton: {
+    position: 'absolute',
+    top: 50,
+    left: 20,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 20,
+    zIndex: 100,
+  },
+  closeButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 });
 
