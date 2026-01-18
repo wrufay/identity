@@ -1,7 +1,6 @@
 import { Audio } from 'expo-av';
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import AdditionalContextModal from './AdditionalContextModal';
+import { StyleSheet, Text, View } from 'react-native';
 
 interface TranslationOverlayProps {
   translation: string;
@@ -21,7 +20,6 @@ export default function TranslationOverlay({
   isScanning = false,
 }: TranslationOverlayProps) {
 
-  const [showAdditionalContext, setShowAdditionalContext] = useState(false);
   const [dots, setDots] = useState('.');
 
   useEffect(() => {
@@ -81,30 +79,11 @@ export default function TranslationOverlay({
   }
 
   return (
-    <>
-      <View style={styles.content}>
-        <Text style={styles.translation}>{translation}</Text>
-        <Text style={styles.pinyin}>{pronunciation}</Text>
-        <Text style={styles.english}>{english}</Text>
-        
-        {/* What else? Button */}
-        <TouchableOpacity 
-          style={styles.whatElseButton}
-          onPress={() => setShowAdditionalContext(true)}
-          activeOpacity={0.8}
-        >
-          <Text style={styles.whatElseButtonText}>What else? 💡</Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* Additional Context Modal */}
-      <AdditionalContextModal
-        visible={showAdditionalContext}
-        onClose={() => setShowAdditionalContext(false)}
-        itemEnglish={english}
-        itemChinese={translation}
-      />
-    </>
+    <View style={styles.content}>
+      <Text style={styles.translation}>{translation}</Text>
+      <Text style={styles.pinyin}>{pronunciation}</Text>
+      <Text style={styles.english}>{english}</Text>
+    </View>
   );
 }
 
@@ -127,12 +106,18 @@ const styles = StyleSheet.create({
     marginTop: 12,
     fontFamily: 'Lexend_400Regular',
     letterSpacing: 1.5,
+    textShadowColor: 'rgba(0, 0, 0, 0.95)',
+    textShadowOffset: { width: 0, height: 3 },
+    textShadowRadius: 8,
   },
   english: {
-    fontSize: 18,
+    fontSize: 26,
     color: '#fefadc',
     marginTop: 8,
     fontFamily: 'NanumPenScript_400Regular',
+    textShadowColor: 'rgba(0, 0, 0, 0.95)',
+    textShadowOffset: { width: 0, height: 3 },
+    textShadowRadius: 8,
   },
   culturalContext: {
     fontSize: 14,
@@ -163,5 +148,8 @@ const styles = StyleSheet.create({
     color: '#fefadc',
     fontSize: 32,
     fontFamily: 'ZCOOLKuaiLe_400Regular',
+    textShadowColor: 'rgba(0, 0, 0, 0.95)',
+    textShadowOffset: { width: 0, height: 3 },
+    textShadowRadius: 8,
   },
 });

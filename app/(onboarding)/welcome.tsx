@@ -1,31 +1,46 @@
+import { Colors } from '@/constants/theme';
+import { Lexend_400Regular, Lexend_600SemiBold, useFonts as useLexendFonts } from '@expo-google-fonts/lexend';
+import { NanumPenScript_400Regular, useFonts as useNanumFonts } from '@expo-google-fonts/nanum-pen-script';
 import { useRouter } from 'expo-router';
 import React from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 export default function WelcomeScreen() {
   const router = useRouter();
 
+  const [nanumLoaded] = useNanumFonts({
+    NanumPenScript_400Regular,
+  });
+
+  const [lexendLoaded] = useLexendFonts({
+    Lexend_400Regular,
+    Lexend_600SemiBold,
+  });
+
+  const fontsLoaded = nanumLoaded && lexendLoaded;
+
+  if (!fontsLoaded) {
+    return null;
+  }
+
   return (
     <View style={styles.container}>
       <View style={styles.content}>
-        <Text style={styles.emoji}>👋</Text>
-        <Text style={styles.title}>Welcome to Identity</Text>
-        <Text style={styles.subtitle}>
-          Your personal AR Chinese learning companion
-        </Text>
+        <Image
+          source={require('@/assets/images/sunny.png')}
+          style={styles.emoji}
+        />
+        <Text style={styles.title}>ᯓ★ ProjectOrigin</Text>
         <Text style={styles.description}>
-          Let's personalize your learning experience with a few quick questions.
+        Welcome to your personal AR Chinese learning companion ₊⊹ Let's get to know you a bit more!
         </Text>
+        <TouchableOpacity
+          style={styles.startButton}
+          onPress={() => router.push('/(onboarding)/proficiency')}
+        >
+          <Text style={styles.startButtonText}>Get Started ☺︎</Text>
+        </TouchableOpacity>
       </View>
-
-      <TouchableOpacity
-        style={styles.startButton}
-        onPress={() => router.push('/(onboarding)/proficiency')}
-      >
-        <Text style={styles.startButtonText}>Get Started</Text>
-      </TouchableOpacity>
-
-      <Text style={styles.footerText}>Takes less than 1 minute</Text>
     </View>
   );
 }
@@ -33,7 +48,7 @@ export default function WelcomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000',
+    backgroundColor: Colors.peach,
     padding: 24,
     justifyContent: 'space-between',
   },
@@ -43,44 +58,45 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   emoji: {
-    fontSize: 80,
+    width: 200,
+    height: 200,
     marginBottom: 24,
   },
   title: {
     fontSize: 36,
     fontWeight: 'bold',
-    color: '#FFF',
-    marginBottom: 12,
+    color: Colors.red,
+    marginBottom: 16,
     textAlign: 'center',
-  },
-  subtitle: {
-    fontSize: 18,
-    color: '#FCD34D',
-    marginBottom: 24,
-    textAlign: 'center',
+    fontFamily: 'Lexend_400Regular'
   },
   description: {
-    fontSize: 16,
-    color: '#AAA',
+    fontSize: 22,
+    color: Colors.olive,
     textAlign: 'center',
     lineHeight: 24,
     paddingHorizontal: 20,
+    fontFamily: 'NanumPenScript_400Regular',
+    marginBottom: 10
   },
   startButton: {
-    backgroundColor: '#FCD34D',
-    padding: 18,
-    borderRadius: 12,
+    backgroundColor: Colors.orange,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 50,
     alignItems: 'center',
+    alignSelf: 'center',
+    marginTop: 24,
+    shadowColor: Colors.red,
+    shadowOffset: { width: -4, height: 4 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 0,
   },
   startButtonText: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '600',
-    color: '#000',
-  },
-  footerText: {
-    fontSize: 14,
-    color: '#666',
-    textAlign: 'center',
-    marginTop: 16,
+    color: Colors.peach,
+    fontFamily: 'Lexend_400Regular'
   },
 });

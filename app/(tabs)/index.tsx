@@ -6,7 +6,7 @@ import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useFonts } from 'expo-font';
 import * as ScreenOrientation from 'expo-screen-orientation';
 import React, { useEffect, useRef, useState } from 'react';
-import { Alert, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import TranslationOverlay from '../../components/TranslationOverlay';
 
 // Backend API URL
@@ -91,7 +91,13 @@ export default function App() {
       const data = await response.json();
 
       if (!response.ok) {
-        // Silently fail - no alert shown
+        // Show gentle error message
+        setOverlay({
+          translation: '',
+          pronunciation: '',
+          english: 'Nothing detected. Try again!',
+          culturalContext: '',
+        });
         setIsScanning(false);
         return;
       }
@@ -100,7 +106,12 @@ export default function App() {
       setIsScanning(false);
     } catch (error) {
       console.error('Capture error:', error);
-      Alert.alert('Error', 'Failed to analyze image');
+      setOverlay({
+        translation: '',
+        pronunciation: '',
+        english: 'Nothing detected. Try again!',
+        culturalContext: '',
+      });
       setIsScanning(false);
     }
   };
@@ -287,19 +298,19 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 50,
     right: 20,
-    backgroundColor: 'rgba(254, 250, 220, 0.5)',
+    backgroundColor: 'rgba(254, 250, 220, 0.3)',
     paddingHorizontal: 20,
     paddingVertical: 10,
     borderRadius: 20,
   },
   vrButtonText: {
     color: '#333',
-    fontFamily: 'NanumPenScript_400Regular',
+    fontFamily: 'ZCOOLKuaiLe_400Regular',
     fontSize: 18,
   },
 
   grantButton: {
-    backgroundColor: 'rgba(254, 250, 220, 0.5)',
+    backgroundColor: 'rgba(254, 250, 220, 0.3)',
     paddingHorizontal: 30,
     paddingVertical: 15,
     borderRadius: 20,
@@ -358,7 +369,7 @@ const vrStyles = StyleSheet.create({
     position: 'absolute',
     top: 20,
     left: 20,
-    backgroundColor: 'rgba(254, 250, 220, 0.5)',
+    backgroundColor: 'rgba(254, 250, 220, 0.3)',
     paddingHorizontal: 20,
     paddingVertical: 10,
     borderRadius: 20,
@@ -367,7 +378,7 @@ const vrStyles = StyleSheet.create({
   },
   exitButtonText: {
     color: '#333',
-    fontFamily: 'NanumPenScript_400Regular',
+    fontFamily: 'ZCOOLKuaiLe_400Regular',
     fontSize: 18,
   },
 

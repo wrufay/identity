@@ -1,12 +1,26 @@
+import { Colors } from '@/constants/theme';
 import { COMMITMENT_LABELS, CommitmentLevel, UserPrefs } from '@/services/userPreferences';
+import { Lexend_400Regular, Lexend_600SemiBold, useFonts as useLexendFonts } from '@expo-google-fonts/lexend';
+import { NanumPenScript_400Regular, useFonts as useNanumFonts } from '@expo-google-fonts/nanum-pen-script';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 export default function CommitmentScreen() {
   const router = useRouter();
   const [selected, setSelected] = useState<CommitmentLevel | null>(null);
   const [isCompleting, setIsCompleting] = useState(false);
+
+  const [nanumLoaded] = useNanumFonts({
+    NanumPenScript_400Regular,
+  });
+
+  const [lexendLoaded] = useLexendFonts({
+    Lexend_400Regular,
+    Lexend_600SemiBold,
+  });
+
+  const fontsLoaded = nanumLoaded && lexendLoaded;
 
   const commitmentOptions: CommitmentLevel[] = [
     '1_2_hours',
@@ -15,6 +29,18 @@ export default function CommitmentScreen() {
     '11_15_hours',
     '15_plus_hours',
   ];
+
+  const commitmentImages = {
+    '1_2_hours': require('@/assets/images/1.png'),
+    '3_5_hours': require('@/assets/images/2.png'),
+    '6_10_hours': require('@/assets/images/3.png'),
+    '11_15_hours': require('@/assets/images/4.png'),
+    '15_plus_hours': require('@/assets/images/5.png'),
+  };
+
+  if (!fontsLoaded) {
+    return null;
+  }
 
   const handleComplete = async () => {
     if (!selected || isCompleting) return;
@@ -64,7 +90,10 @@ export default function CommitmentScreen() {
                 style={[styles.option, selected === commitment && styles.selectedOption]}
                 onPress={() => setSelected(commitment)}
               >
-                <Text style={styles.optionEmoji}>{label.emoji}</Text>
+                <Image
+                  source={commitmentImages[commitment]}
+                  style={styles.optionImage}
+                />
                 <View style={styles.optionContent}>
                   <Text style={styles.optionTitle}>{label.title}</Text>
                   <Text style={styles.optionDescription}>{label.description}</Text>
@@ -110,7 +139,7 @@ export default function CommitmentScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000',
+    backgroundColor: Colors.peach,
   },
   scrollView: {
     flex: 1,
@@ -122,21 +151,23 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 32,
     fontWeight: 'bold',
-    color: '#FFF',
+    color: Colors.red,
     marginBottom: 12,
+    fontFamily: 'Lexend_400Regular',
   },
   subtitle: {
-    fontSize: 16,
-    color: '#AAA',
+    fontSize: 20,
+    color: Colors.olive,
     marginBottom: 32,
     lineHeight: 24,
+    fontFamily: 'NanumPenScript_400Regular',
   },
   options: {
     gap: 12,
     marginBottom: 20,
   },
   option: {
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    backgroundColor: Colors.green,
     padding: 20,
     borderRadius: 16,
     borderWidth: 2,
@@ -145,12 +176,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   selectedOption: {
-    borderColor: '#FCD34D',
-    backgroundColor: 'rgba(252, 211, 77, 0.1)',
+    borderColor: Colors.red,
+    backgroundColor: Colors.orange,
   },
-  optionEmoji: {
-    fontSize: 32,
+  optionImage: {
+    width: 80,
+    height: 80,
     marginRight: 16,
+    opacity: 0.8,
   },
   optionContent: {
     flex: 1,
@@ -158,12 +191,14 @@ const styles = StyleSheet.create({
   optionTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#FFF',
+    color: Colors.olive,
     marginBottom: 4,
+    fontFamily: 'Lexend_600SemiBold',
   },
   optionDescription: {
-    fontSize: 14,
-    color: '#AAA',
+    fontSize: 18,
+    color: Colors.olive,
+    fontFamily: 'NanumPenScript_400Regular',
   },
   footer: {
     padding: 24,
@@ -175,30 +210,44 @@ const styles = StyleSheet.create({
   },
   backButton: {
     flex: 1,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    padding: 18,
-    borderRadius: 12,
+    backgroundColor: Colors.green,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 50,
     alignItems: 'center',
+    shadowColor: Colors.red,
+    shadowOffset: { width: -4, height: 4 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 0,
   },
   backButtonText: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#FFF',
+    color: Colors.olive,
+    fontFamily: 'Lexend_400Regular',
   },
   completeButton: {
     flex: 2,
-    backgroundColor: '#FCD34D',
-    padding: 18,
-    borderRadius: 12,
+    backgroundColor: Colors.orange,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 50,
     alignItems: 'center',
+    shadowColor: Colors.red,
+    shadowOffset: { width: -4, height: 4 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 0,
   },
   disabledButton: {
-    backgroundColor: '#333',
+    backgroundColor: Colors.green,
   },
   completeButtonText: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#000',
+    color: Colors.peach,
+    fontFamily: 'Lexend_400Regular',
   },
   progressContainer: {
     marginTop: 24,
@@ -207,17 +256,18 @@ const styles = StyleSheet.create({
   progressBar: {
     width: '100%',
     height: 4,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    backgroundColor: Colors.green,
     borderRadius: 2,
     marginBottom: 8,
   },
   progressFill: {
     height: '100%',
-    backgroundColor: '#FCD34D',
+    backgroundColor: Colors.orange,
     borderRadius: 2,
   },
   progressText: {
     fontSize: 12,
-    color: '#666',
+    color: Colors.olive,
+    fontFamily: 'Lexend_400Regular',
   },
 });
