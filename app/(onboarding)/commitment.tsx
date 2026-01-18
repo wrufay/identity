@@ -1,7 +1,7 @@
+import { COMMITMENT_LABELS, CommitmentLevel, UserPrefs } from '@/services/userPreferences';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { CommitmentLevel, COMMITMENT_LABELS, UserPrefs } from '@/services/userPreferences';
 
 export default function CommitmentScreen() {
   const router = useRouter();

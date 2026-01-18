@@ -1,7 +1,7 @@
+import { LEARNING_GOAL_LABELS, LearningGoal, UserPrefs } from '@/services/userPreferences';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { LearningGoal, LEARNING_GOAL_LABELS, UserPrefs } from '@/services/userPreferences';
 
 export default function GoalsScreen() {
   const router = useRouter();

@@ -1,7 +1,7 @@
+import { PROFICIENCY_LABELS, ProficiencyLevel, UserPrefs } from '@/services/userPreferences';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { ProficiencyLevel, PROFICIENCY_LABELS, UserPrefs } from '@/services/userPreferences';
 
 export default function ProficiencyScreen() {
   const router = useRouter();
