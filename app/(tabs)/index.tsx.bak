@@ -90,6 +90,8 @@ export default function App() {
 
       const data = await response.json();
 
+      console.log("Received data from backend:", data);
+      console.log("Cultural context:", data.culturalContext);
 
       if (!response.ok) {
         // Show gentle error message
