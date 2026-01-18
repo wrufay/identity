@@ -4,7 +4,7 @@
     "slug": "heritage-ar",
     "version": "1.0.0",
     "orientation": "default",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/images/projectorigin.png",
     "scheme": "heritagear",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
@@ -28,7 +28,7 @@
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/splash-icon.png",
+          "image": "./assets/images/projectorigin.png",
           "imageWidth": 300,
           "resizeMode": "contain",
           "backgroundColor": "#ffdac6",
