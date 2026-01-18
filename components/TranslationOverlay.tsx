@@ -1,11 +1,12 @@
 import { Audio } from 'expo-av';
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 interface TranslationOverlayProps {
   translation: string;
   pronunciation: string;
   english: string;
+  culturalContext?: string;
   isScanning?: boolean;
 }
 
@@ -15,13 +16,25 @@ export default function TranslationOverlay({
   translation,
   pronunciation,
   english,
+  culturalContext,
   isScanning = false,
 }: TranslationOverlayProps) {
+  const [dots, setDots] = useState('.');
+
   useEffect(() => {
     if (!isScanning && translation) {
       playPronunciation(translation);
     }
   }, [translation, isScanning]);
+
+  useEffect(() => {
+    if (isScanning) {
+      const interval = setInterval(() => {
+        setDots((prev) => (prev.length >= 3 ? '.' : prev + '.'));
+      }, 500);
+      return () => clearInterval(interval);
+    }
+  }, [isScanning]);
 
   const playPronunciation = async (text: string) => {
     try {
@@ -31,10 +44,16 @@ export default function TranslationOverlay({
         body: JSON.stringify({ text }),
       });
 
+      if (!response.ok) {
+        console.error('TTS API error:', response.status);
+        return;
+      }
+
       const data = await response.json();
 
-      if (!response.ok || !data.audio) {
-        throw new Error('Failed to get audio');
+      if (!data.audio) {
+        console.error('No audio data in response');
+        return;
       }
 
       const { sound } = await Audio.Sound.createAsync(
@@ -50,11 +69,12 @@ export default function TranslationOverlay({
       });
     } catch (error) {
       console.error('Audio error:', error);
+      // Silently fail - don't crash the app if TTS fails
     }
   };
 
   if (isScanning) {
-    return <Text style={styles.scanningText}>...</Text>;
+    return <Text style={styles.scanningText}>{dots}</Text>;
   }
 
   return (
@@ -62,6 +82,9 @@ export default function TranslationOverlay({
       <Text style={styles.translation}>{translation}</Text>
       <Text style={styles.pinyin}>{pronunciation}</Text>
       <Text style={styles.english}>{english}</Text>
+      {culturalContext && (
+        <Text style={styles.culturalContext}>{culturalContext}</Text>
+      )}
     </View>
   );
 }
@@ -92,12 +115,22 @@ const styles = StyleSheet.create({
     color: '#fefadc',
     marginTop: 8,
     fontFamily: 'NanumPenScript_400Regular',
-    
+
+  },
+  culturalContext: {
+    fontSize: 14,
+    color: '#fefadc',
+    marginTop: 16,
+    fontFamily: 'Lexend_300Light',
+    lineHeight: 20,
+    textAlign: 'center',
+    paddingHorizontal: 20,
+    opacity: 0.9,
   },
   scanningText: {
     color: '#fefadc',
     fontSize: 32,
     fontFamily: 'ZCOOLKuaiLe_400Regular',
-    
+
   },
 });
