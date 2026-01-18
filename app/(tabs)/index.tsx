@@ -1,6 +1,7 @@
 import { Lexend_100Thin, Lexend_200ExtraLight, Lexend_300Light, Lexend_400Regular, Lexend_500Medium, Lexend_600SemiBold, Lexend_700Bold, Lexend_800ExtraBold, Lexend_900Black } from '@expo-google-fonts/lexend';
 import { NanumPenScript_400Regular } from '@expo-google-fonts/nanum-pen-script';
 import { ZCOOLKuaiLe_400Regular } from '@expo-google-fonts/zcool-kuaile';
+import { Audio } from 'expo-av';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useFonts } from 'expo-font';
 import * as ScreenOrientation from 'expo-screen-orientation';
@@ -49,6 +50,15 @@ export default function App() {
     }
   }, [vrMode]);
 
+  useEffect(() => {
+    // Set audio mode to allow silent camera capture
+    Audio.setAudioModeAsync({
+      playsInSilentModeIOS: false,
+      allowsRecordingIOS: false,
+      staysActiveInBackground: false,
+    });
+  }, []);
+
 
   const captureAndAnalyze = async () => {
     if (!cameraRef.current || isScanning) return;
@@ -58,7 +68,8 @@ export default function App() {
     try {
       const photo = await cameraRef.current.takePictureAsync({
         base64: true,
-        quality: 0.7,
+        quality: 0.8,
+        skipProcessing: false,
       });
 
       if (!photo?.base64) {
@@ -80,7 +91,7 @@ export default function App() {
       const data = await response.json();
 
       if (!response.ok) {
-        Alert.alert('Not Found', data.message || 'Item not recognized');
+        // Silently fail - no alert shown
         setIsScanning(false);
         return;
       }
@@ -129,6 +140,7 @@ export default function App() {
                 translation={overlay.translation}
                 pronunciation={overlay.pronunciation}
                 english={overlay.english}
+                culturalContext={overlay.culturalContext}
               />
             ) : isScanning ? (
               <TranslationOverlay
@@ -150,6 +162,7 @@ export default function App() {
                 translation={overlay.translation}
                 pronunciation={overlay.pronunciation}
                 english={overlay.english}
+                culturalContext={overlay.culturalContext}
               />
             ) : isScanning ? (
               <TranslationOverlay
@@ -162,24 +175,26 @@ export default function App() {
           </View>
         </View>
 
-        {/* Exit VR button (top left) */}
-        <TouchableOpacity
-          style={vrStyles.exitButton}
-          onPress={() => {
-            setVrMode(false);
-            setOverlay(null);
-          }}
-        >
-          <Text style={vrStyles.exitButtonText}>X</Text>
-        </TouchableOpacity>
-
         {/* Tap anywhere to scan or dismiss overlay */}
         {!overlay && !isScanning && (
           <TouchableOpacity
             style={vrStyles.tapToScanArea}
             onPress={captureAndAnalyze}
             activeOpacity={1}
-          />
+          >
+            <View style={{ flex: 1 }} pointerEvents="box-none">
+              {/* Exit VR button (top left) */}
+              <TouchableOpacity
+                style={vrStyles.exitButton}
+                onPress={() => {
+                  setVrMode(false);
+                  setOverlay(null);
+                }}
+              >
+                <Text style={vrStyles.exitButtonText}>Regular mode</Text>
+              </TouchableOpacity>
+            </View>
+          </TouchableOpacity>
         )}
 
         {overlay && (
@@ -187,7 +202,20 @@ export default function App() {
             style={vrStyles.tapToScanArea}
             onPress={() => setOverlay(null)}
             activeOpacity={1}
-          />
+          >
+            <View style={{ flex: 1 }} pointerEvents="box-none">
+              {/* Exit VR button (top left) */}
+              <TouchableOpacity
+                style={vrStyles.exitButton}
+                onPress={() => {
+                  setVrMode(false);
+                  setOverlay(null);
+                }}
+              >
+                <Text style={vrStyles.exitButtonText}>Regular mode</Text>
+              </TouchableOpacity>
+            </View>
+          </TouchableOpacity>
         )}
       </View>
     );
@@ -201,7 +229,7 @@ export default function App() {
         facing="back"
         ref={cameraRef}
       >
-        {/* VR Mode Toggle */}
+        {/* VR Mode Toggle - always visible */}
         <TouchableOpacity
           style={styles.vrButton}
           onPress={() => setVrMode(true)}
@@ -230,6 +258,7 @@ export default function App() {
                 translation={overlay.translation}
                 pronunciation={overlay.pronunciation}
                 english={overlay.english}
+                culturalContext={overlay.culturalContext}
               />
             ) : (
               <TranslationOverlay
@@ -268,6 +297,7 @@ const styles = StyleSheet.create({
     fontFamily: 'NanumPenScript_400Regular',
     fontSize: 18,
   },
+
   grantButton: {
     backgroundColor: 'rgba(254, 250, 220, 0.5)',
     paddingHorizontal: 30,
@@ -323,22 +353,24 @@ const vrStyles = StyleSheet.create({
     width: 4,
     backgroundColor: 'rgba(255, 255, 255, 0.4)',
   },
+
   exitButton: {
     position: 'absolute',
     top: 20,
     left: 20,
-    backgroundColor: 'rgba(0, 0, 0, 0.4)',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
+    backgroundColor: 'rgba(254, 250, 220, 0.5)',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
     borderRadius: 20,
     justifyContent: 'center',
     alignItems: 'center',
   },
   exitButtonText: {
-    color: 'white',
-    fontWeight: '600',
-    fontSize: 14,
+    color: '#333',
+    fontFamily: 'NanumPenScript_400Regular',
+    fontSize: 18,
   },
+
   tapToScanArea: {
     position: 'absolute',
     top: 0,
