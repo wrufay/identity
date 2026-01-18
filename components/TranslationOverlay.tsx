@@ -1,6 +1,7 @@
 import { Audio } from 'expo-av';
-import React, { useEffect } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { StyleSheet, Text, View, TouchableOpacity } from 'react-native';
+import AdditionalContextModal from './AdditionalContextModal';
 
 interface TranslationOverlayProps {
   translation: string;
@@ -17,6 +18,8 @@ export default function TranslationOverlay({
   english,
   isScanning = false,
 }: TranslationOverlayProps) {
+  const [showAdditionalContext, setShowAdditionalContext] = useState(false);
+
   useEffect(() => {
     if (!isScanning && translation) {
       playPronunciation(translation);
@@ -58,11 +61,30 @@ export default function TranslationOverlay({
   }
 
   return (
-    <View style={styles.content}>
-      <Text style={styles.translation}>{translation}</Text>
-      <Text style={styles.pinyin}>{pronunciation}</Text>
-      <Text style={styles.english}>{english}</Text>
-    </View>
+    <>
+      <View style={styles.content}>
+        <Text style={styles.translation}>{translation}</Text>
+        <Text style={styles.pinyin}>{pronunciation}</Text>
+        <Text style={styles.english}>{english}</Text>
+        
+        {/* What else? Button */}
+        <TouchableOpacity 
+          style={styles.whatElseButton}
+          onPress={() => setShowAdditionalContext(true)}
+          activeOpacity={0.8}
+        >
+          <Text style={styles.whatElseButtonText}>What else? 💡</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Additional Context Modal */}
+      <AdditionalContextModal
+        visible={showAdditionalContext}
+        onClose={() => setShowAdditionalContext(false)}
+        itemEnglish={english}
+        itemChinese={translation}
+      />
+    </>
   );
 }
 
@@ -93,6 +115,21 @@ const styles = StyleSheet.create({
     marginTop: 8,
     fontFamily: 'NanumPenScript_400Regular',
     
+  },
+  whatElseButton: {
+    marginTop: 24,
+    backgroundColor: 'rgba(252, 211, 77, 0.3)',
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 20,
+    borderWidth: 2,
+    borderColor: '#FCD34D',
+  },
+  whatElseButtonText: {
+    color: '#FCD34D',
+    fontSize: 16,
+    fontWeight: '600',
+    fontFamily: 'Lexend_600SemiBold',
   },
   scanningText: {
     color: '#fefadc',

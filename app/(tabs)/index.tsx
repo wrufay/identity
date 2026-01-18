@@ -320,8 +320,8 @@ const vrStyles = StyleSheet.create({
     alignItems: 'center',
   },
   centerDivider: {
-    width: 2,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    width: 4,
+    backgroundColor: 'rgba(255, 255, 255, 0.4)',
   },
   exitButton: {
     position: 'absolute',

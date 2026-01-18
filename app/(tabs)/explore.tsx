@@ -1,5 +1,5 @@
 import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import { Platform, StyleSheet, Alert, TouchableOpacity } from 'react-native';
 
 import { Collapsible } from '@/components/ui/collapsible';
 import { ExternalLink } from '@/components/external-link';
@@ -8,8 +8,41 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Fonts } from '@/constants/theme';
+import { UserPrefs } from '@/services/userPreferences';
+import { useRouter } from 'expo-router';
+import { useState, useEffect } from 'react';
 
 export default function TabTwoScreen() {
+  const router = useRouter();
+  const [preferences, setPreferences] = useState<any>(null);
+
+  useEffect(() => {
+    loadPreferences();
+  }, []);
+
+  const loadPreferences = async () => {
+    const prefs = await UserPrefs.getPreferences();
+    setPreferences(prefs);
+  };
+
+  const handleResetOnboarding = () => {
+    Alert.alert(
+      'Reset Onboarding',
+      'This will reset your learning preferences and show the onboarding flow again.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Reset',
+          style: 'destructive',
+          onPress: async () => {
+            await UserPrefs.resetOnboarding();
+            router.replace('/(onboarding)/welcome' as any);
+          },
+        },
+      ]
+    );
+  };
+
   return (
     <ParallaxScrollView
       headerBackgroundColor={{ light: '#D0D0D0', dark: '#353636' }}
@@ -30,6 +63,36 @@ export default function TabTwoScreen() {
           Explore
         </ThemedText>
       </ThemedView>
+
+      <Collapsible title="Your Learning Profile">
+        {preferences && preferences.hasCompletedOnboarding ? (
+          <>
+            <ThemedText>
+              <ThemedText type="defaultSemiBold">Level:</ThemedText>{' '}
+              {preferences.proficiencyLevel?.replace('_', ' ')}
+            </ThemedText>
+            <ThemedText>
+              <ThemedText type="defaultSemiBold">Goal:</ThemedText>{' '}
+              {preferences.learningGoal?.replace('_', ' ')}
+            </ThemedText>
+            <ThemedText>
+              <ThemedText type="defaultSemiBold">Commitment:</ThemedText>{' '}
+              {preferences.commitmentLevel?.replace('_', ' ')} hours/week
+            </ThemedText>
+            <TouchableOpacity 
+              onPress={handleResetOnboarding}
+              style={styles.resetButton}
+            >
+              <ThemedText style={styles.resetButtonText}>
+                Reset Learning Profile
+              </ThemedText>
+            </TouchableOpacity>
+          </>
+        ) : (
+          <ThemedText>Complete onboarding to see your profile.</ThemedText>
+        )}
+      </Collapsible>
+
       <ThemedText>This app includes example code to help you get started.</ThemedText>
       <Collapsible title="File-based routing">
         <ThemedText>
@@ -108,5 +171,18 @@ const styles = StyleSheet.create({
   titleContainer: {
     flexDirection: 'row',
     gap: 8,
+  },
+  resetButton: {
+    marginTop: 12,
+    padding: 12,
+    backgroundColor: 'rgba(252, 211, 77, 0.2)',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#FCD34D',
+  },
+  resetButtonText: {
+    color: '#FCD34D',
+    textAlign: 'center',
+    fontWeight: '600',
   },
 });
