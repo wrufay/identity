@@ -10,6 +10,9 @@
     "lint": "expo lint"
   },
   "dependencies": {
+    "@expo-google-fonts/lexend": "^0.4.1",
+    "@expo-google-fonts/nanum-pen-script": "^0.4.0",
+    "@expo-google-fonts/zcool-kuaile": "^0.4.1",
     "@expo/vector-icons": "^15.0.3",
     "@google/generative-ai": "^0.24.1",
     "@react-navigation/bottom-tabs": "^7.4.0",
