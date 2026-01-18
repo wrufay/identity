@@ -1,7 +1,7 @@
 import { Asset } from 'expo-asset';
 import { GLView } from 'expo-gl';
 import { Renderer, TextureLoader } from 'expo-three';
-import React, { useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { PanResponder, StyleSheet, View } from 'react-native';
 import * as THREE from 'three';
 
@@ -578,7 +578,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    height: '50%', // Only bottom half responds to touch for model interaction
+    height: '30%', // Reduced from 50% so buttons above are clickable
   },
   glView: {
     flex: 1,
